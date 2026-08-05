@@ -40,11 +40,16 @@ export async function PUT(
     if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
 
     const body = await request.json();
-    const { recipient, sender, message } = body;
+    const { recipient, sender, message, auto_delete } = body;
+
+    const updateData: any = { recipient, sender, message };
+    if (auto_delete !== undefined) {
+      updateData.auto_delete = auto_delete;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('messages')
-      .update({ recipient, sender, message })
+      .update(updateData)
       .eq('id', id)
       .select();
 
