@@ -1,0 +1,107 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const id = (await params).id;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      console.error("DB Error:", error);
+      return NextResponse.json({ error: 'Pesan tidak ditemukan' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data });
+
+  } catch (error) {
+    console.error("Server Error:", error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const id = (await params).id;
+    if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
+
+    const body = await request.json();
+    const { recipient, sender, message } = body;
+
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .update({ recipient, sender, message })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error("DB Error:", error);
+      return NextResponse.json({ error: 'Gagal mengupdate data' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: data[0] });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const id = (await params).id;
+    if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
+
+    // 1. Ambil data dulu untuk mengecek apakah ada file media di storage
+    const { data: msgData, error: msgError } = await supabaseAdmin
+      .from('messages')
+      .select('media_type, media_url')
+      .eq('id', id)
+      .single();
+
+    if (msgError) {
+      return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
+    }
+
+    // 2. Hapus file di storage jika tipenya image atau video
+    if (msgData && (msgData.media_type === 'image' || msgData.media_type === 'video') && msgData.media_url) {
+      // Ekstrak nama file dari URL (bagian terakhir setelah /)
+      const parts = msgData.media_url.split('/');
+      const fileName = parts[parts.length - 1];
+      if (fileName) {
+        await supabaseAdmin.storage.from('videos').remove([fileName]);
+      }
+    }
+
+    // 3. Hapus data di database
+    const { error: deleteError } = await supabaseAdmin
+      .from('messages')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      return NextResponse.json({ error: 'Gagal menghapus data dari database' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Data berhasil dihapus' });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
