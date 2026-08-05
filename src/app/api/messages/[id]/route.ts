@@ -39,12 +39,52 @@ export async function PUT(
     const id = (await params).id;
     if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
 
-    const body = await request.json();
-    const { recipient, sender, message, auto_delete } = body;
+    const formData = await request.formData();
+    const recipient = formData.get('recipient') as string;
+    const sender = formData.get('sender') as string;
+    const message = formData.get('message') as string;
+    const auto_delete = formData.get('auto_delete') === 'true';
 
-    const updateData: any = { recipient, sender, message };
-    if (auto_delete !== undefined) {
-      updateData.auto_delete = auto_delete;
+    const updateData: any = { recipient, sender, message, auto_delete };
+
+    // Jika admin mengubah media
+    const mediaType = formData.get('media_type') as string | null;
+    if (mediaType) {
+      let mediaUrl = '';
+      if (mediaType === 'youtube') {
+        mediaUrl = formData.get('media_link') as string;
+      } else if (mediaType === 'image' || mediaType === 'video') {
+        const file = formData.get('media_file') as File;
+        if (!file) {
+          return NextResponse.json({ error: 'File media tidak ditemukan' }, { status: 400 });
+        }
+        
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `uploads/${fileName}`;
+
+        const { error: uploadError } = await supabaseAdmin
+          .storage
+          .from('media')
+          .upload(filePath, file, {
+            contentType: file.type,
+          });
+
+        if (uploadError) {
+          console.error("Upload Error:", uploadError);
+          return NextResponse.json({ error: 'Gagal mengunggah media baru' }, { status: 500 });
+        }
+
+        const { data: publicUrlData } = supabaseAdmin
+          .storage
+          .from('media')
+          .getPublicUrl(filePath);
+
+        mediaUrl = publicUrlData.publicUrl;
+      }
+
+      updateData.media_type = mediaType;
+      updateData.media_url = mediaUrl;
     }
 
     const { data, error } = await supabaseAdmin
