@@ -1,10 +1,32 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
+export async function OPTIONS(request: Request) {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
+    },
+  });
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const textBody = await request.text();
+    console.log("Raw body received:", textBody);
+    
+    let body;
+    try {
+      body = JSON.parse(textBody);
+    } catch (e) {
+      console.error("Failed to parse JSON body");
+      return NextResponse.json({ error: 'Format data tidak valid' }, { status: 400 });
+    }
+
+    const { email, password } = body;
+    console.log("Parsed email:", email);
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email dan Password wajib diisi' }, { status: 400 })
@@ -16,8 +38,13 @@ export async function POST(request: Request) {
       password: password,
     })
 
-    if (error || !data.session) {
-      return NextResponse.json({ error: 'Email atau Password salah!' }, { status: 401 })
+    if (error) {
+      console.error("Supabase Auth Error:", error);
+      return NextResponse.json({ error: error.message }, { status: error.status || 400 })
+    }
+
+    if (!data.session) {
+      return NextResponse.json({ error: 'Sesi tidak valid' }, { status: 401 })
     }
 
     // Mengirimkan token ke frontend
