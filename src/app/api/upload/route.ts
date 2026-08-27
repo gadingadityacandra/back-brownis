@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { v4 as uuidv4 } from 'uuid';
+import { verifyAuth } from '@/lib/auth';
 
 export async function OPTIONS(request: Request) {
   return new Response(null, {
@@ -15,6 +16,9 @@ export async function OPTIONS(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!await verifyAuth(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const formData = await request.formData();
     const media_file = formData.get('media_file') as File | null;
 

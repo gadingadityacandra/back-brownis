@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { verifyAuth } from '@/lib/auth';
 
 export async function OPTIONS(request: Request) {
   return new Response(null, {
@@ -47,6 +48,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!await verifyAuth(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const id = (await params).id;
     if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
 
@@ -121,6 +125,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!await verifyAuth(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const id = (await params).id;
     if (!id) return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
 
