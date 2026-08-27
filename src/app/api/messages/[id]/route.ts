@@ -153,7 +153,7 @@ export async function DELETE(
       const parts = msgData.media_url.split('/');
       const fileName = parts[parts.length - 1];
       if (fileName) {
-        await supabaseAdmin.storage.from('videos').remove([fileName]);
+        await supabaseAdmin.storage.from('media').remove([fileName]);
       }
     }
 

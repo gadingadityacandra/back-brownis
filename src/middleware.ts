@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 
-const allowedOrigins = ['http://localhost:5173', 'https://brownies-app.web.app']; // Tambahkan URL Vercel nanti
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://brownies-app.web.app',
+  'https://iambrownies.my.id',
+  'https://www.iambrownies.my.id',
+  'https://back-brownis.vercel.app',
+  'https://front-brownis.vercel.app',
+];
 
 export function middleware(request: Request) {
   const origin = request.headers.get('origin') ?? '';
