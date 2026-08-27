@@ -50,12 +50,17 @@ export async function POST(request: Request) {
     }
 
     // Insert ke tabel messages (sesuaikan dengan skema baru)
-    const { data, error } = await supabaseAdmin
-      .from('messages')
-      .insert([
-        { id, recipient, sender, message, media_type, media_url, auto_delete, admin_email: adminEmail }
-      ])
-      .select();
+    let payload: any = { id, recipient, sender, message, media_type, media_url, auto_delete, admin_email: adminEmail };
+    let { data, error } = await supabaseAdmin.from('messages').insert([payload]).select();
+
+    // Fallback jika user belum membuat kolom admin_email di Supabase
+    if (error && error.message.includes('admin_email')) {
+      console.warn("Kolom admin_email tidak ditemukan di Supabase. Melakukan fallback.");
+      delete payload.admin_email;
+      const fallbackResult = await supabaseAdmin.from('messages').insert([payload]).select();
+      data = fallbackResult.data;
+      error = fallbackResult.error;
+    }
 
     if (error) {
       console.error("DB Error:", error);
