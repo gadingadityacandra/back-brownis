@@ -48,7 +48,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!await verifyAuth(request)) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const id = (await params).id;
@@ -125,7 +126,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!await verifyAuth(request)) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const id = (await params).id;

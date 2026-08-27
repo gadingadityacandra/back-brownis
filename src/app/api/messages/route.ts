@@ -16,9 +16,11 @@ export async function OPTIONS(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    if (!await verifyAuth(request)) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const adminEmail = authResult.user?.email || null;
     const formData = await request.formData();
     const recipient = formData.get('recipient') as string;
     const sender = formData.get('sender') as string;
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabaseAdmin
       .from('messages')
       .insert([
-        { id, recipient, sender, message, media_type, media_url, auto_delete }
+        { id, recipient, sender, message, media_type, media_url, auto_delete, admin_email: adminEmail }
       ])
       .select();
 
@@ -68,8 +70,12 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const authResult = await verifyAuth(request);
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     // 1. Lazy Cleanup: Hapus pesan yang sudah lebih dari 7 hari dan auto_delete = true
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

@@ -58,7 +58,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       message: 'Login berhasil',
-      token: data.session.access_token 
+      token: data.session.access_token,
+      email: data.user?.email || email
     })
 
   } catch (error) {

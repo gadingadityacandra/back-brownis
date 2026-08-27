@@ -16,7 +16,8 @@ export async function OPTIONS(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    if (!await verifyAuth(request)) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const formData = await request.formData();
