@@ -26,30 +26,10 @@ export async function POST(request: Request) {
     if (media_type === 'youtube' && media_link) {
       // Jika youtube, langsung simpan URL-nya
       media_url = media_link;
-    } else if ((media_type === 'video' || media_type === 'image') && media_file) {
-      // Jika gambar/video, upload ke Supabase Storage
-      const fileExt = media_file.name.split('.').pop();
-      const fileName = `${id}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabaseAdmin
-        .storage
-        .from('videos') // Tetap gunakan bucket 'videos' untuk semua file media agar praktis
-        .upload(fileName, media_file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-         console.error("Upload error:", uploadError);
-         return NextResponse.json({ error: 'Gagal mengunggah file media ke Storage' }, { status: 500 });
-      }
-      
-      const { data: publicUrlData } = supabaseAdmin
-        .storage
-        .from('videos')
-        .getPublicUrl(fileName);
-        
-      media_url = publicUrlData.publicUrl;
+    } else if ((media_type === 'video' || media_type === 'image') && media_link) {
+      // Jika gambar/video, file sudah di-upload sebelumnya lewat /api/upload
+      // Kita langsung terima URL-nya dari frontend
+      media_url = media_link;
     }
 
     // Insert ke tabel messages (sesuaikan dengan skema baru)
