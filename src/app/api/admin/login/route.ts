@@ -25,7 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Format data tidak valid' }, { status: 400 });
     }
 
-    const { email, password } = body;
+    const email = body.email || body.username;
+    const password = body.password;
     console.log("Parsed email:", email);
 
     if (!email || !password) {
