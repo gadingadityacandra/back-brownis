@@ -3,6 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { verifyAuth } from '@/lib/auth';
 
+// Perpanjang batas waktu eksekusi Vercel menjadi 60 detik (default: 10 detik)
+// Diperlukan agar upload video besar tidak timeout
+export const maxDuration = 60;
+
 export async function OPTIONS(request: Request) {
   return new Response(null, {
     status: 204,
