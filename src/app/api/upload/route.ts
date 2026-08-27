@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const fileExt = media_file.name.split('.').pop();
     const fileName = `${id}.${fileExt}`;
     
-    const { data: uploadData, error: uploadError } = await supabaseAdmin
+    let { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('media')
       .upload(fileName, media_file, {
@@ -39,9 +39,28 @@ export async function POST(request: Request) {
         upsert: false
       });
 
+    // Jika gagal, kemungkinan besar bucket 'media' belum ada. Kita buatkan otomatis!
+    if (uploadError) {
+       console.warn("Upload gagal, mencoba membuat bucket 'media' secara otomatis...");
+       
+       await supabaseAdmin.storage.createBucket('media', { public: true });
+       
+       // Coba upload lagi setelah bucket dibuat
+       const retry = await supabaseAdmin
+         .storage
+         .from('media')
+         .upload(fileName, media_file, {
+           cacheControl: '3600',
+           upsert: false
+         });
+         
+       uploadData = retry.data;
+       uploadError = retry.error;
+    }
+
     if (uploadError) {
        console.error("Upload error:", uploadError);
-       return NextResponse.json({ error: 'Gagal mengunggah file media ke Storage' }, { status: 500 });
+       return NextResponse.json({ error: 'Gagal mengunggah file media ke Storage. Pastikan Supabase Anda tidak penuh atau error.' }, { status: 500 });
     }
     
     const { data: publicUrlData } = supabaseAdmin
