@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
-      .from('videos')
+      .from('media')
       .upload(fileName, media_file, {
         cacheControl: '3600',
         upsert: false
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     
     const { data: publicUrlData } = supabaseAdmin
       .storage
-      .from('videos')
+      .from('media')
       .getPublicUrl(fileName);
       
     const media_url = publicUrlData.publicUrl;

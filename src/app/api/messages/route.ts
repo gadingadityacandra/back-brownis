@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Gagal menyimpan pesan ke Database' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: data[0] });
+    return NextResponse.json({ success: true, data: data ? data[0] : null });
 
   } catch (error) {
     console.error("Server Error:", error);
