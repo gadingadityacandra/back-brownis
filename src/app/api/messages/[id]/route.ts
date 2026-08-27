@@ -79,10 +79,13 @@ export async function PUT(
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `uploads/${fileName}`;
 
+        // Convert File to Buffer to fix Next.js Vercel upload bug
+        const buffer = Buffer.from(await file.arrayBuffer());
+
         const { error: uploadError } = await supabaseAdmin
           .storage
           .from('media')
-          .upload(filePath, file, {
+          .upload(filePath, buffer, {
             contentType: file.type,
           });
 

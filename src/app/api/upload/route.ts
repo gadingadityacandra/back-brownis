@@ -31,10 +31,14 @@ export async function POST(request: Request) {
     const fileExt = media_file.name.split('.').pop();
     const fileName = `${id}.${fileExt}`;
     
+    // Convert File to Buffer to fix Next.js Vercel upload bug
+    const buffer = Buffer.from(await media_file.arrayBuffer());
+
     let { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('media')
-      .upload(fileName, media_file, {
+      .upload(fileName, buffer, {
+        contentType: media_file.type,
         cacheControl: '3600',
         upsert: false
       });
@@ -49,7 +53,8 @@ export async function POST(request: Request) {
        const retry = await supabaseAdmin
          .storage
          .from('media')
-         .upload(fileName, media_file, {
+         .upload(fileName, buffer, {
+           contentType: media_file.type,
            cacheControl: '3600',
            upsert: false
          });
