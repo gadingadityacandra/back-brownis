@@ -40,7 +40,13 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Supabase Auth Error:", error);
-      return NextResponse.json({ error: error.message }, { status: error.status || 400 })
+      let errorMessage = error.message;
+      if (errorMessage === "Invalid login credentials") {
+        errorMessage = "Email atau password salah!";
+      } else if (errorMessage === "Email not confirmed") {
+        errorMessage = "Email belum dikonfirmasi! Pastikan Anda sudah mematikan opsi 'Confirm email' di Supabase.";
+      }
+      return NextResponse.json({ error: errorMessage }, { status: error.status || 400 })
     }
 
     if (!data.session) {
